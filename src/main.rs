@@ -1,5 +1,6 @@
 mod config;
 mod config_repository;
+mod version;
 
 use crate::config::config_menu;
 use clap::{Parser, Subcommand};
