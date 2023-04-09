@@ -1,3 +1,7 @@
+mod config;
+mod config_repository;
+
+use crate::config::config_menu;
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
@@ -42,7 +46,7 @@ fn main() {
             println!("Info!");
         }
         CliCommands::Config => {
-            println!("Config!");
+            config_menu();
         }
     };
 }
