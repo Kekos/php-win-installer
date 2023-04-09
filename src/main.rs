@@ -1,5 +1,7 @@
+mod arch;
 mod config;
 mod config_repository;
+mod lock_file;
 mod version;
 
 use crate::config::config_menu;

@@ -11,10 +11,28 @@ pub struct Config {
     thread_safety: Option<ThreadSafety>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(PartialEq, Clone, Serialize, Deserialize)]
 pub enum ThreadSafety {
     Safe,
     NonSafe,
+}
+
+impl ThreadSafety {
+    pub fn to_php_ident(&self) -> String {
+        String::from(match self {
+            Self::Safe => "ts",
+            Self::NonSafe => "nts",
+        })
+    }
+}
+
+impl ToString for ThreadSafety {
+    fn to_string(&self) -> String {
+        String::from(match self {
+            Self::Safe => "TS",
+            Self::NonSafe => "NTS",
+        })
+    }
 }
 
 impl Config {
