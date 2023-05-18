@@ -5,6 +5,7 @@ mod lock_file;
 mod version;
 mod win_php_client;
 mod win_php_domain;
+mod zip;
 
 use crate::config::config_menu;
 use clap::{Parser, Subcommand};
