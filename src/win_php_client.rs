@@ -1,4 +1,5 @@
 use crate::win_php_domain::ReleasesResponse;
+use log::{debug, trace};
 use reqwest::blocking::Client;
 use reqwest::{Error as ReqwestError, StatusCode};
 use serde_json::Error as SerdeError;
@@ -28,16 +29,25 @@ impl WinPhpClient {
     }
 
     pub fn get_releases(&self) -> Result<ReleasesResponse, ClientError> {
-        let response = self
+        let url = format!("{}/{}", BASE_URL, RELEASES_JSON_URL);
+
+        debug!("GET {}", url);
+
+        let response_result = self
             .reqwest
-            .get(format!("{}{}", BASE_URL, RELEASES_JSON_URL))
+            .get(url)
             .header("User-Agent", "win_php_client/0.0")
             .send();
-        if let Err(err) = response {
+
+        if let Err(err) = response_result {
             return Err(ClientError::Reqwest(err));
         }
 
-        let json = response.unwrap().text();
+        let response = response_result.unwrap();
+
+        debug!("Response code: {}", response.status());
+
+        let json = response.text();
         if let Err(err) = json {
             return Err(ClientError::Reqwest(err));
         }
@@ -54,6 +64,8 @@ impl WinPhpClient {
     pub fn download_zip(&self, path: &str, file: &mut File) -> Result<(), ClientError> {
         let url = format!("{}/{}", BASE_URL, path);
 
+        debug!("GET {}", url);
+
         let response_result = self
             .reqwest
             .get(url)
@@ -66,16 +78,22 @@ impl WinPhpClient {
 
         let response = response_result.unwrap();
 
+        debug!("Response code: {}", response.status());
+
         if response.status() != StatusCode::OK {
             return Err(ClientError::HttpError(response.status()));
         }
 
-        let bytes = response.bytes();
-        if let Err(err) = bytes {
+        let bytes_result = response.bytes();
+        if let Err(err) = bytes_result {
             return Err(ClientError::Reqwest(err));
         }
 
-        let mut content = Cursor::new(bytes.unwrap());
+        let bytes = bytes_result.unwrap();
+
+        trace!("Downloaded ZIP of {} bytes", bytes.len());
+
+        let mut content = Cursor::new(bytes);
 
         if let Err(err) = std::io::copy(&mut content, file) {
             return Err(ClientError::IO(err));

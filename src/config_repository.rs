@@ -1,5 +1,6 @@
 use crate::config::Config;
 use home::home_dir;
+use log::debug;
 use std::fs;
 use std::io::ErrorKind;
 use std::path::PathBuf;
@@ -38,6 +39,8 @@ fn get_config_path() -> PathBuf {
     let mut path = home_dir().expect("Could not detect your home directory");
 
     path.push(".pwin.toml");
+
+    debug!("Looking for config file at path \"{}\"", path.display());
 
     path
 }

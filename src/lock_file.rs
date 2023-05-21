@@ -2,6 +2,7 @@ use crate::arch::Arch;
 use crate::config::ThreadSafety;
 use crate::version::Version;
 use home::home_dir;
+use log::{debug, trace};
 use serde_derive::{Deserialize, Serialize};
 use std::fs;
 use std::io::ErrorKind;
@@ -56,7 +57,11 @@ pub fn read() -> LockFile {
 }
 
 pub fn write(lock: &LockFile) {
+    trace!("Begin writing lock file");
+
     let lock_data = toml::to_string(&lock).expect("Could not convert lock to TOML");
+
+    trace!("End writing lock file");
 
     if let Err(error) = fs::write(get_lock_path(), lock_data) {
         panic!("Could not write lock file: {}", error);
@@ -67,6 +72,8 @@ fn get_lock_path() -> PathBuf {
     let mut path = home_dir().expect("Could not detect your home directory");
 
     path.push(".pwin.lock");
+
+    debug!("Looking for lock file at path \"{}\"", path.display());
 
     path
 }

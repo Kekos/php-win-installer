@@ -1,3 +1,4 @@
+use log::{debug, error, trace};
 use std::fs;
 use std::path::Path;
 
@@ -15,6 +16,12 @@ pub fn install(version: Version) {
     let config_path = Path::new(config.config.path());
     let ts = config.config.thread_safety();
     let arch = Arch::get();
+
+    debug!(
+        "Thread safety {}, Arch {}",
+        ts.to_string(),
+        arch.to_string()
+    );
 
     if lock.has_version(&version) {
         println!("Version {} already installed", version.to_string());
@@ -50,7 +57,10 @@ pub fn install(version: Version) {
     let zip_filename = build.unwrap().1.zip.path.as_str();
     let zip_filepath = config_path.join(&zip_filename);
 
+    debug!("{}", zip_filepath.to_str().unwrap());
+
     if !config_path.exists() {
+        trace!("Will create config path \"{}\"", config_path.display());
         fs::create_dir_all(&config_path).expect("Could not create storage directory");
     }
 

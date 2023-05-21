@@ -11,10 +11,13 @@ mod zip;
 use crate::config::config_menu;
 use crate::version::Version;
 use clap::{Parser, Subcommand};
+use log::error;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 pub struct CliArgs {
+    #[clap(flatten)]
+    verbose: clap_verbosity_flag::Verbosity,
     #[command(subcommand)]
     command: CliCommands,
 }
@@ -42,19 +45,26 @@ enum CliCommands {
 fn main() {
     let args = CliArgs::parse();
 
+    stderrlog::new()
+        .module(module_path!())
+        .quiet(args.verbose.is_silent())
+        .verbosity(args.verbose.log_level_filter())
+        .init()
+        .unwrap();
+
     match args.command {
         CliCommands::Install { version } => {
             if let Ok(version) = version.parse::<Version>() {
                 version_manager::install(version);
             } else {
-                println!("`version` argument could not be parsed");
+                error!("`version` argument could not be parsed");
             }
         }
         CliCommands::Remove { version } => {
             if let Ok(version) = version.parse::<Version>() {
                 version_manager::remove(version);
             } else {
-                println!("`version` argument could not be parsed");
+                error!("`version` argument could not be parsed");
             }
         }
         CliCommands::Update { dry_run, version } => {
@@ -62,7 +72,7 @@ fn main() {
                 if let Ok(version) = version.parse::<Version>() {
                     version_manager::update(Some(version), dry_run);
                 } else {
-                    println!("`version` argument could not be parsed");
+                    error!("`version` argument could not be parsed");
                 }
             } else {
                 version_manager::update(None, dry_run);

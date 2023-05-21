@@ -1,6 +1,7 @@
 use crate::config_repository::ConfigRepository;
 use dialoguer::console::Term;
 use dialoguer::Select;
+use log::error;
 use serde_derive::{Deserialize, Serialize};
 use std::io::stdin;
 use std::string::String;
@@ -137,7 +138,7 @@ fn select_thread_safety(term: &Term) {
                 keep_selecting = false;
             }
             _ => {
-                println!("Not a valid choice")
+                error!("Not a valid choice")
             }
         }
     }

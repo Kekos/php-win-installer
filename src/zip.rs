@@ -1,4 +1,5 @@
 use crate::zip::ZipError::{IoError, OutDirNotDirectory, ZipLibError};
+use log::{debug, trace};
 use std::fmt::{Display, Formatter};
 use std::path::Path;
 use std::{fs, io};
@@ -25,12 +26,16 @@ impl<'e> Display for ZipError {
 }
 
 pub fn extract<P: AsRef<Path>>(zip_path: P, out_path: P) -> Result<(), ZipError> {
+    trace!("Will open ZIP file {}", zip_path.as_ref().display());
+
     let file = fs::File::open(zip_path).map_err(|err| IoError(err))?;
     let mut archive = zip::ZipArchive::new(file).map_err(|err| ZipLibError(err))?;
 
     let out_path_ref = out_path.as_ref();
+    trace!("ZIP output directory: {}", out_path_ref.display());
 
     if !out_path_ref.exists() {
+        trace!("ZIP output directory didn't exist, will create now");
         fs::create_dir_all(out_path_ref).map_err(|err| IoError(err))?;
     }
 
@@ -48,10 +53,25 @@ pub fn extract<P: AsRef<Path>>(zip_path: P, out_path: P) -> Result<(), ZipError>
         };
 
         if (*file.name()).ends_with('/') {
+            debug!(
+                "ZIP: File {} extracted to \"{}\"",
+                i,
+                out_path_ref.display()
+            );
+
             fs::create_dir_all(&file_out_path).unwrap();
         } else {
+            debug!(
+                "ZIP: File {}, \"{}\" extracted to \"{}\" ({} bytes)",
+                i,
+                file.name(),
+                file_out_path.display(),
+                file.size()
+            );
+
             if let Some(p) = file_out_path.parent() {
                 if !p.exists() {
+                    trace!("ZIP: Parent directory \"{}\" will be created", p.display());
                     fs::create_dir_all(&p).unwrap();
                 }
             }
