@@ -57,7 +57,7 @@ pub fn install(version: Version) {
     let zip_filename = build.unwrap().1.zip.path.as_str();
     let zip_filepath = config_path.join(&zip_filename);
 
-    debug!("{}", zip_filepath.to_str().unwrap());
+    debug!("ZIP file path: {}", zip_filepath.to_str().unwrap());
 
     if !config_path.exists() {
         trace!("Will create config path \"{}\"", config_path.display());
@@ -98,6 +98,8 @@ pub fn remove(version: Version) {
     }
 
     let release_path = config_path.join(version.to_string());
+
+    debug!("Removing the directory {}", release_path.display());
 
     fs::remove_dir_all(release_path).expect("Failed to delete version folder");
 
