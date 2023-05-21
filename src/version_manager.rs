@@ -88,6 +88,18 @@ pub fn install(version: Version) {
 
 pub fn remove(version: Version) {
     let mut lock = lock_file::read();
+    let config = ConfigRepository::read();
+    let config_path = Path::new(config.config.path());
+
+    if !lock.has_version(&version) {
+        println!("Version {} not installed", version.to_string());
+
+        return;
+    }
+
+    let release_path = config_path.join(version.to_string());
+
+    fs::remove_dir_all(release_path).expect("Failed to delete version folder");
 
     lock.remove_version(version);
 
