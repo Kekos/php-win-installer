@@ -108,7 +108,24 @@ pub fn remove(version: Version) {
     lock_file::write(&lock);
 }
 
-pub fn update(version: Option<Version>, dry_run: bool) {}
+pub fn update(version: Option<Version>, dry_run: bool) {
+    let mut lock = lock_file::read();
+    let config = ConfigRepository::read();
+    let config_path = Path::new(config.config.path());
+    let mut upgradable_versions = lock.versions_iter();
+
+    if let Some(version) = version {
+        if !lock.has_version(&version) {
+            println!("Version {} not installed", version.to_string());
+
+            return;
+        }
+
+        upgradable_versions = upgradable_versions
+            .take_while(|lv| lv.version.match_major_minor(&version))
+            .collect();
+    }
+}
 
 pub fn info() {
     let mut lock = lock_file::read();
