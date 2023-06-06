@@ -42,29 +42,44 @@ impl LockFile {
     }
 }
 
-pub fn read() -> LockFile {
-    let config_data = match fs::read_to_string(get_lock_path()) {
-        Ok(data) => data,
-        Err(error) => match error.kind() {
-            ErrorKind::NotFound => String::from("versions = []"),
-            error => panic!("Could not open lock file: {}", error),
-        },
-    };
-
-    let lock: LockFile = toml::from_str(config_data.as_str()).expect("Could not parse lock file");
-
-    lock
+pub trait LockFileRepository {
+    fn new() -> Self;
+    fn read(&self) -> LockFile;
+    fn write(&self, lock: &LockFile);
 }
 
-pub fn write(lock: &LockFile) {
-    trace!("Begin writing lock file");
+pub struct FileLockFileRepository {}
 
-    let lock_data = toml::to_string(&lock).expect("Could not convert lock to TOML");
+impl LockFileRepository for FileLockFileRepository {
+    fn new() -> Self {
+        Self {}
+    }
 
-    trace!("End writing lock file");
+    fn read(&self) -> LockFile {
+        let config_data = match fs::read_to_string(get_lock_path()) {
+            Ok(data) => data,
+            Err(error) => match error.kind() {
+                ErrorKind::NotFound => String::from("versions = []"),
+                error => panic!("Could not open lock file: {}", error),
+            },
+        };
 
-    if let Err(error) = fs::write(get_lock_path(), lock_data) {
-        panic!("Could not write lock file: {}", error);
+        let lock: LockFile =
+            toml::from_str(config_data.as_str()).expect("Could not parse lock file");
+
+        lock
+    }
+
+    fn write(&self, lock: &LockFile) {
+        trace!("Begin writing lock file");
+
+        let lock_data = toml::to_string(&lock).expect("Could not convert lock to TOML");
+
+        trace!("End writing lock file");
+
+        if let Err(error) = fs::write(get_lock_path(), lock_data) {
+            panic!("Could not write lock file: {}", error);
+        }
     }
 }
 
@@ -76,4 +91,26 @@ fn get_lock_path() -> PathBuf {
     debug!("Looking for lock file at path \"{}\"", path.display());
 
     path
+}
+
+#[cfg(test)]
+pub struct MemoryLockFileRepository {
+    lock_file: String,
+}
+
+impl LockFileRepository for MemoryLockFileRepository {
+    fn new() -> Self {
+        Self {
+            lock_file: String::from("versions = []"),
+        }
+    }
+
+    fn read(&self) -> LockFile {
+        let lock: LockFile =
+            toml::from_str(self.lock_file.as_str()).expect("Could not parse lock file");
+
+        lock
+    }
+
+    fn write(&self, _lock: &LockFile) {}
 }
